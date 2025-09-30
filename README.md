@@ -8,7 +8,7 @@ notification that's for a pull request that's now merged or closed.
 Create a directory to hold output logs so you can see if errors occur. For example:
 
 ```sh
-mkdir ~/Documents/gh-notif/dismisser-logs
+mkdir ~/Documents/gh-notif-dismisser-logs
 ```
 
 To get a GitHub token to authenticate with, try running `gh auth refresh -s repo` and go through the interactive
@@ -18,7 +18,7 @@ Then you can add configuration like the following to your crontab to run the scr
 
 ```cron
 # At every 10th minute past every hour from 8 through 17 on every day-of-week from Monday through Friday:
-*/10 8-17 * * 1-5 echo "YOUR_TOKEN_HERE" | /path/to/gh auth login --with-token && /path/to/gh-notif-dismisser.rb -h "/path/to/gh" >/path/to/gh-notif-dismisser-logs/stdout.log 2>/path/to/gh-notif-dismisser-logs/stderr.log
+*/10 8-17 * * 1-5 echo "YOUR_TOKEN_HERE" | /absolute/path/to/gh auth login --with-token && /absolute/path/to/gh-notif-dismisser.rb -h "/absolute/path/to/gh" >/absolute/path/to/gh-notif-dismisser-logs/stdout.log 2>/absolute/path/to/gh-notif-dismisser-logs/stderr.log
 ```
 
 To view logs after the script has run at least once, you can run:
