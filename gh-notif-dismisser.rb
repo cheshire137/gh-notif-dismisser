@@ -1,13 +1,35 @@
 #!/usr/bin/env ruby
 
 require "json"
+require "optparse"
 
+options = {}
+option_parser = OptionParser.new do |opts|
+  opts.on("-q", "--quiet", "Quiet mode, suppressing all output except errors")
+  opts.on("-h PATH", "--gh-path", String, "Path to gh executable")
+end
+option_parser.parse!(ARGV, into: options)
+quiet_mode = !!options[:quiet]
+puts "Using options: #{options.inspect}" unless quiet_mode
+def which(cmd)
+  pathext = ENV['PATHEXT']
+  exts = pathext ? pathext.split(';') : ['']
+  path_env = ENV['PATH'] || ""
+  path_env.split(File::PATH_SEPARATOR).each do |path|
+    exts.each do |ext|
+      exe = File.join(path, "#{cmd}#{ext}")
+      return exe if File.executable?(exe) && !File.directory?(exe)
+    end
+  end
+  nil
+end
+gh_path = options[:"gh-path"] || which("gh") || "gh"
 def pull_request_number_for_notification(notif)
   return unless notif["subject"]["type"] == "PullRequest"
   notif["subject"]["url"].split("/pulls/").last.to_i
 end
-puts "Loading notifications from GitHub API..."
-json_str = `gh api notifications`
+puts "Loading notifications from GitHub API..." unless quiet_mode
+json_str = `#{gh_path} api notifications`
 json = begin
   JSON.parse(json_str)
 rescue => e
@@ -52,8 +74,8 @@ gql_query = <<~GRAPHQL
 GRAPHQL
 total_pull_notifs = pull_notifications.size
 units = total_pull_notifs == 1 ? "notification" : "notifications"
-puts "Loading info about #{total_pull_notifs} pull request #{units}..."
-pull_json_str = `gh api graphql -f query='#{gql_query}'`
+puts "Loading info about #{total_pull_notifs} pull request #{units}..." unless quiet_mode
+pull_json_str = `#{gh_path} api graphql -f query='#{gql_query}'`
 pull_json = begin
   JSON.parse(pull_json_str)
 rescue => e
@@ -63,7 +85,7 @@ end
 puts "Looking for merged PRs with notifications..."
 def mark_notification_as_done(notif)
   thread_id = notif["id"]
-  `gh api /notifications/threads/#{thread_id} -X DELETE -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28'`
+  `#{gh_path} api /notifications/threads/#{thread_id} -X DELETE -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28'`
 end
 pull_notifications.each do |notif|
   repo_nwo = notif["repository"]["full_name"]
@@ -81,11 +103,11 @@ pull_notifications.each do |notif|
   next unless pull_data
 
   if pull_data["state"] == "MERGED"
-    puts "Marking notification for merged pull request #{repo_nwo}##{pull_number} as done..."
+    puts "Marking notification for merged pull request #{repo_nwo}##{pull_number} as done..." unless quiet_mode
     mark_notification_as_done(notif)
   elsif pull_data["state"] == "CLOSED"
-    puts "Marking notification for closed pull request #{repo_nwo}##{pull_number} as done..."
+    puts "Marking notification for closed pull request #{repo_nwo}##{pull_number} as done..." unless quiet_mode
     mark_notification_as_done(notif)
   end
 end
-puts "Done!"
+puts "Done!" unless quiet_mode
