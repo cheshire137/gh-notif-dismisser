@@ -83,7 +83,7 @@ rescue => e
   exit 1
 end
 puts "Looking for merged PRs with notifications..."
-def mark_notification_as_done(notif)
+def mark_notification_as_done(notif, gh_path:)
   thread_id = notif["id"]
   `#{gh_path} api /notifications/threads/#{thread_id} -X DELETE -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28'`
 end
@@ -104,10 +104,10 @@ pull_notifications.each do |notif|
 
   if pull_data["state"] == "MERGED"
     puts "Marking notification for merged pull request #{repo_nwo}##{pull_number} as done..." unless quiet_mode
-    mark_notification_as_done(notif)
+    mark_notification_as_done(notif, gh_path: gh_path)
   elsif pull_data["state"] == "CLOSED"
     puts "Marking notification for closed pull request #{repo_nwo}##{pull_number} as done..." unless quiet_mode
-    mark_notification_as_done(notif)
+    mark_notification_as_done(notif, gh_path: gh_path)
   end
 end
 puts "Done!" unless quiet_mode
