@@ -3,6 +3,17 @@
 This uses [`gh`](https://cli.github.com/) to interact with the GitHub API via a Ruby script. It will mark as done any
 notification that's for a pull request that's now merged or closed.
 
+It can also optionally dismiss notifications from team code-review requests once another member of the same team has
+already approved the pull request. Pass one or more `--team org/slug` (alias `-t`) flags listing the teams whose
+approvals should dismiss your stale review-request notifications. For example:
+
+```sh
+./gh-notif-dismisser.rb --team github/some-team-name --team github/some-other-team
+```
+
+For this to work, your `gh` auth token needs the `read:org` scope so the script can list team members. Run
+`gh auth refresh -s read:org` if needed.
+
 ## Sample cron setup
 
 Create a directory to hold output logs so you can see if errors occur. For example:
