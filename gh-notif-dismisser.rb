@@ -118,6 +118,13 @@ want_team_info = teams.any?
 pull_extra_fields = if want_team_info
   <<~GRAPHQL
     latestReviews(first: 100) { nodes { state author { login } } }
+    reviewRequests(first: 100) {
+      nodes {
+        requestedReviewer {
+          ... on User { login }
+        }
+      }
+    }
     timelineItems(first: 100, itemTypes: REVIEW_REQUESTED_EVENT) {
       nodes {
         ... on ReviewRequestedEvent {
@@ -217,6 +224,16 @@ pull_notifications.each do |notif|
 
   next unless want_team_info
   next unless notif["reason"] == "review_requested"
+
+  individually_requested_logins = (pull_data.dig("reviewRequests", "nodes") || []).map do |req|
+    reviewer = req["requestedReviewer"]
+    reviewer.is_a?(Hash) ? reviewer["login"] : nil
+  end.compact
+  if individually_requested_logins.include?(viewer_login)
+    puts "Keeping notification for #{repo_nwo}##{pull_number}: you are individually " \
+         "requested as a reviewer." unless quiet_mode
+    next
+  end
 
   matched_teams = configured_teams_requested_on_pull(pull_data, teams)
   next if matched_teams.empty?
