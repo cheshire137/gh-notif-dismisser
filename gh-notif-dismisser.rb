@@ -56,6 +56,7 @@ if teams.any?
     puts "Failed to look up viewer login via `gh auth status`; aborting."
     exit 1
   end
+  auth_status_str = auth_status_str.force_encoding("UTF-8")
   match = auth_status_str.match(/Logged in to \S+ account (\S+)/)
   viewer_login = match && match[1]
   if viewer_login.nil? || viewer_login.empty?
